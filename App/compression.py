@@ -6,8 +6,39 @@ class TAG:
         self.offset = offset
 
 # -----------------------------------
-# function to handle the repetition =>
+# functions to handle the repetition =>
 
+def one_symb_repetition(text, i, slh):
+    j = i + 1
+    while j <= min(i + slh - 1, len(text) - 1):
+        if (len(set(text[i:j + 1])) == 1):
+            j += 1
+            continue
+        else:
+            break
+    length = len(text[i:j])
+    position = 1
+    if j < len(text):
+        offset = text[j]
+    else:
+        offset = "NULL"
+    return TAG(position, length, offset), j + 1
+
+def two_symb_repetition(text, i, slh):
+    j = i + 2
+    while j <= min(i + slh - 1, len(text) - 1):
+        if (len(set(text[i:j + 1])) == 2):
+            j += 1
+            continue
+        else:
+            break
+    length = len(text[i:j])
+    position = 2
+    if j < len(text):
+        offset = text[j]
+    else:
+        offset = "NULL"
+    return TAG(position, length, offset), j + 1
 # -----------------------------------
 
 # compression function
@@ -28,6 +59,16 @@ def lz77_compression(text, sws, slh):
             listOfTags.append(tag)
             i = i + 1
         else:
+            if (text[i] == text[i-1]):
+                tag, new_i = one_symb_repetition(text, i, slh)
+                listOfTags.append(tag)
+                i = new_i
+                continue
+            if (i > 1 and text[i] == text[i-2] and text[i+1] == text[i-1]):
+                tag, new_i = two_symb_repetition(text, i, slh)
+                listOfTags.append(tag)
+                i = new_i
+                continue
             j = i
             while j <= endOfLhw: 
                 pattern = text[i:j+1]
@@ -71,7 +112,7 @@ max_length_bits = max_length.bit_length()
 
 tag_size = max_position_bits + max_length_bits + 8
 
-# print the Tags and Size
+# print the Tags
 print("---------------------------------------------------------------------")
 print("Tags:", end=" ")
 for i in list:
