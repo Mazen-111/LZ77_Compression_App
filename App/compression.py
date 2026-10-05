@@ -1,4 +1,4 @@
-# Tag => <position, length, next symbole>  
+# Tag => <position, length, next symbol>  
 class TAG:
     def __init__(self, position, length, offset):
         self.position = position
@@ -6,39 +6,39 @@ class TAG:
         self.offset = offset
 
 # -----------------------------------
-# functions to handle the repetition =>
+# function to handle the repetition =>
 
-def one_symb_repetition(text, i, slh):
-    j = i + 1
-    while j <= min(i + slh - 1, len(text) - 1):
-        if (len(set(text[i:j + 1])) == 1):
-            j += 1
-            continue
-        else:
-            break
-    length = len(text[i:j])
-    position = 1
-    if j < len(text):
-        offset = text[j]
-    else:
-        offset = "NULL"
-    return TAG(position, length, offset), j + 1
+def handle_repetition(text, i, sws, slh):
+    best_position = 0
+    best_length = 0
 
-def two_symb_repetition(text, i, slh):
-    j = i + 2
-    while j <= min(i + slh - 1, len(text) - 1):
-        if (len(set(text[i:j + 1])) == 2):
-            j += 1
-            continue
-        else:
-            break
-    length = len(text[i:j])
-    position = 2
-    if j < len(text):
-        offset = text[j]
+    window_start = max(0, i - sws)
+
+    for position in range(1, i - window_start + 1):
+
+        length = 0
+
+        while (length < slh and i + length < len(text) and text[i + length] == text[i - position + (length % position)]):
+            length += 1
+
+        if length > best_length:
+            best_length = length
+            best_position = position
+
+    if best_length == 0:
+        return TAG(0, 0, text[i]), i + 1
+
+    next_index = i + best_length
+
+    if next_index < len(text):
+        offset = text[next_index]
+        next_i = next_index + 1
     else:
-        offset = "NULL"
-    return TAG(position, length, offset), j + 1
+        offset = None
+        next_i = next_index
+
+    return TAG(best_position, best_length, offset), next_i
+pass
 # -----------------------------------
 
 # compression function
@@ -48,7 +48,6 @@ def lz77_compression(text, sws, slh):
     listOfTags = []
     while i < n:
         startOfsw = (i - sws) if (i - sws) >= 0 else 0
-        endOfLhw = min(i + slh - 1, n - 1)
         if i == 0:
             sw = ""
         else:
@@ -59,73 +58,43 @@ def lz77_compression(text, sws, slh):
             listOfTags.append(tag)
             i = i + 1
         else:
-            if (text[i] == text[i-1]):
-                tag, new_i = one_symb_repetition(text, i, slh)
-                listOfTags.append(tag)
-                i = new_i
-                continue
-            if (i > 1 and text[i] == text[i-2] and text[i+1] == text[i-1]):
-                tag, new_i = two_symb_repetition(text, i, slh)
-                listOfTags.append(tag)
-                i = new_i
-                continue
-            j = i
-            while j <= endOfLhw: 
-                pattern = text[i:j+1]
-                if pattern in sw:
-                    j = j + 1   
-                    continue
-                else:
-                    length = len(pattern)-1
-                    position = len(sw) - sw.rfind(pattern[:-1])
-                    if j < n:
-                        offset = text[j]
-                    else:
-                        offset = "NULL"
-                    tag = TAG(position, length, offset)
-                    listOfTags.append(tag)
-                    i += length + 1
-                    break
-            if j > endOfLhw:
-                pattern = text[i:endOfLhw+1]
-                length = len(pattern)
-                position = len(sw) - sw.rfind(pattern)
+            tag, i = handle_repetition(text, i, sws, slh)
+            listOfTags.append(tag)
 
-                listOfTags.append(TAG(position, length, "NULL"))
-                i += length
-        
     return listOfTags
+pass
 
+def results():
+    # take input from user
+    text = input("Enter the text to be compressed: ")
+    sws = int(input("Enter the Size of the Search Window: ")) # Size of search window 
+    slh = int(input("Enter the size of the Lock a head window: ")) # size of Lock ahead window
 
-# take input from user
-text = input("Enter the text to be compressed: ")
-sws = int(input("Enter the Size of the Search Window: ")) # Size of search window 
-slh = int(input("Enter the size of the Lock a head window: ")) # size of Lock ahead window
+    list = lz77_compression(text, sws, slh) # output Tags 
 
-list = lz77_compression(text, sws, slh) # output Tags 
+    max_position = max(tag.position for tag in list)
+    max_position_bits = max_position.bit_length()
 
-max_position = max(tag.position for tag in list)
-max_position_bits = max_position.bit_length()
+    max_length = max(tag.length for tag in list)
+    max_length_bits = max_length.bit_length()
 
-max_length = max(tag.length for tag in list)
-max_length_bits = max_length.bit_length()
+    tag_size = max_position_bits + max_length_bits + 8
 
-tag_size = max_position_bits + max_length_bits + 8
+    # print the Tags
+    print("---------------------------------------------------------------------")
+    print("Tags:", end=" ")
+    for i in list:
+        print(f"<{i.position},{i.length},{i.offset}>", end=" ")
+    print("\n---------------------------------------------------------------------")
+    print(f"Max Position: {max_position}    Stored in: {max_position_bits} Bits")
+    print(f"Max Length: {max_length}      Stored in: {max_length_bits} Bits")
+    print(f"Next Symbol is stored in: 8 Bits")
+    print("---------------------------------------------------------------------")
+    print(f"Tag Size: {max_position_bits} + {max_length_bits} + 8 = {tag_size} Bits")
+    print(f"Total Size before Compression: {len(text) * 8} Bits", end="     ")
+    print(f"Total Size after Compression: {len(list) * tag_size} Bits")
+    print("---------------------------------------------------------------------")
 
-# print the Tags
-print("---------------------------------------------------------------------")
-print("Tags:", end=" ")
-for i in list:
-    print(f"<{i.position},{i.length},{i.offset}>", end=" ")
-print("\n---------------------------------------------------------------------")
-print(f"Max Position: {max_position}    Stored in: {max_position_bits} Bits")
-print(f"Max Length: {max_length}      Stored in: {max_length_bits} Bits")
-print(f"Next Symbol is stored in: 8 Bits")
-print("---------------------------------------------------------------------")
-print(f"Tag Size: {max_position_bits} + {max_length_bits} + 8 = {tag_size} Bits")
-print(f"Total Size before Compression: {len(text) * 8} Bits", end="     ")
-print(f"Total Size after Compression: {len(list) * tag_size} Bits")
-print("---------------------------------------------------------------------")
 
 
 
