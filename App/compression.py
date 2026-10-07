@@ -5,9 +5,7 @@ class TAG:
         self.length = length
         self.offset = offset
 
-# -----------------------------------
-# function to handle the repetition =>
-
+# function to handle the repetition
 def handle_repetition(text, i, sws, slh):
     best_position = 0
     best_length = 0
@@ -38,12 +36,11 @@ def handle_repetition(text, i, sws, slh):
         next_i = next_index
 
     return TAG(best_position, best_length, offset), next_i
-pass
-# -----------------------------------
+
 
 # compression function
 def lz77_compression(text, sws, slh):
-    n = len(text) #text length
+    n = len(text)
     i = 0
     listOfTags = []
     while i < n:
@@ -60,40 +57,23 @@ def lz77_compression(text, sws, slh):
         else:
             tag, i = handle_repetition(text, i, sws, slh)
             listOfTags.append(tag)
-
     return listOfTags
-pass
 
-def results():
-    # take input from user
-    text = input("Enter the text to be compressed: ")
-    sws = int(input("Enter the Size of the Search Window: ")) # Size of search window 
-    slh = int(input("Enter the size of the Lock a head window: ")) # size of Lock ahead window
-
-    list = lz77_compression(text, sws, slh) # output Tags 
-
-    max_position = max(tag.position for tag in list)
-    max_position_bits = max_position.bit_length()
-
-    max_length = max(tag.length for tag in list)
-    max_length_bits = max_length.bit_length()
-
+def size_after_compression(tags):
+    max_position_bits = max(tag.position for tag in tags).bit_length()
+    max_length_bits = max(tag.length for tag in tags).bit_length()
     tag_size = max_position_bits + max_length_bits + 8
+    return tag_size
 
-    # print the Tags
-    print("---------------------------------------------------------------------")
+def printTags(tags, text, tag_size):
+    print("-------------------------------------")
     print("Tags:", end=" ")
-    for i in list:
+    for i in tags:
         print(f"<{i.position},{i.length},{i.offset}>", end=" ")
-    print("\n---------------------------------------------------------------------")
-    print(f"Max Position: {max_position}    Stored in: {max_position_bits} Bits")
-    print(f"Max Length: {max_length}      Stored in: {max_length_bits} Bits")
-    print(f"Next Symbol is stored in: 8 Bits")
-    print("---------------------------------------------------------------------")
-    print(f"Tag Size: {max_position_bits} + {max_length_bits} + 8 = {tag_size} Bits")
-    print(f"Total Size before Compression: {len(text) * 8} Bits", end="     ")
-    print(f"Total Size after Compression: {len(list) * tag_size} Bits")
-    print("---------------------------------------------------------------------")
+    print('\n')
+    print(f"Total Size before Compression: {len(text) * 8} Bits", end="      ")
+    print(f"Total Size after Compression: {len(tags) * tag_size} Bits")
+    print("-------------------------------------")
 
 
 
