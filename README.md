@@ -92,26 +92,6 @@ The second tag copies five characters using a distance of one. Copying is perfor
 
 Provides the menu, keyboard input, Tkinter file selection, output printing, and optional file saving.
 
-## Known limitations
-
-1. **Serialized-tag parsing is broken:** the decompressor splits input on whitespace, even though the compressor includes spaces inside each tag. Commas, whitespace symbols, and newlines also need unambiguous escaping or a structured serialization format.
-2. **Incorrect compressed-size display:** `printTags` multiplies the number of characters in the serialized tag string by the estimated bits per tag instead of multiplying by the number of tags.
-3. **Size estimates are not actual compression ratios:** output is saved as UTF-8 text, not packed binary data; the implementation assumes eight bits per symbol and does not account for encoding or format overhead.
-4. **Empty input can crash the size calculator:** `size_after_compression([])` calls `max()` on an empty sequence.
-5. **No input validation:** nonnumeric, zero, or negative window sizes are not handled safely.
-6. **Output filename collision:** both save paths currently write to `compressed.txt`, so decompression output may overwrite compressed tags.
-7. **No error handling for malformed tags or inaccessible files.**
-8. **Performance is not optimized:** the compressor tries multiple backward distances and can be slow on large inputs.
-
-## Suggested improvements
-
-- Replace the text-tag format with a lossless serialization format, such as JSON with explicit handling of `None`, or a defined binary encoding.
-- Add round-trip tests for empty text, repeated characters, spaces, commas, newlines, Unicode, and malformed inputs.
-- Correct the size report to distinguish estimated packed-tag size from the actual UTF-8 output file size.
-- Validate window sizes and tag references before processing.
-- Use separate filenames (`compressed.txt` and `decompressed.txt`) and consider allowing users to choose output paths.
-- Add a `main()` entry point and avoid running the interactive menu on import.
-
 ## Example: in-memory round trip
 
 ```python
