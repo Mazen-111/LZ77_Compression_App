@@ -5,6 +5,9 @@ class TAG:
         self.length = length
         self.offset = offset
 
+    def __str__(self):
+        return f"<{self.position},{self.length},{self.offset}>"
+
 # function to handle the repetition
 def handle_repetition(text, i, sws, slh):
     best_position = 0
@@ -57,7 +60,9 @@ def lz77_compression(text, sws, slh):
         else:
             tag, i = handle_repetition(text, i, sws, slh)
             listOfTags.append(tag)
-    return listOfTags
+
+    result = " ".join(str(tag) for tag in listOfTags)
+    return listOfTags, result
 
 def size_after_compression(tags):
     max_position_bits = max(tag.position for tag in tags).bit_length()
@@ -65,11 +70,10 @@ def size_after_compression(tags):
     tag_size = max_position_bits + max_length_bits + 8
     return tag_size
 
-def printTags(tags, text, tag_size):
+def printTags(tagsAsTxt, text, tag_size, tags):
     print("-------------------------------------")
     print("Tags:", end=" ")
-    for i in tags:
-        print(f"<{i.position},{i.length},{i.offset}>", end=" ")
+    print(tagsAsTxt)
     print('\n')
     print(f"Total Size before Compression: {len(text) * 8} Bits", end="      ")
     print(f"Total Size after Compression: {len(tags) * tag_size} Bits")
