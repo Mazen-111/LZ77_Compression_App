@@ -26,9 +26,6 @@ def handle_repetition(text, i, sws, slh):
             best_length = length
             best_position = position
 
-    if best_length == 0:
-        return TAG(0, 0, text[i]), i + 1
-
     next_index = i + best_length
 
     if next_index < len(text):
