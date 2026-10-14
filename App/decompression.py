@@ -1,3 +1,5 @@
+from compression import TAG
+
 def lz77_decompression(user_input):
     Original_Data = ""
 
@@ -9,7 +11,7 @@ def lz77_decompression(user_input):
                 position, length, symbol = tag.split(",")
                 symbol = symbol.strip('" \' “” ‘’ ')
                 tags.append((int(position), int(length), symbol))
-        #-------------------------------------
+
         for position, length, symbol in tags:
             if position > 0:
                 for _ in range(length):
@@ -26,3 +28,32 @@ def lz77_decompression(user_input):
                 Original_Data += tag.offset
 
     return Original_Data
+
+
+
+
+def load_binary_tags(file_path):
+    bits = ""
+    with open (file_path, "rb") as file:
+        tagsAsBytes = file.read()
+        numOfBytes = len(tagsAsBytes)
+
+        for i in range(numOfBytes):
+            byte = format(tagsAsBytes[i], "08b")
+            bits += byte
+
+    pos_bits = int(bits[0:6],2)
+    len_bits = int(bits[6:12],2)
+    padding = int(bits[12:16],2)
+
+    tags = []
+
+    for i in range(16, len(bits)-padding, pos_bits + len_bits + 8):
+        position = int(bits[i:i + pos_bits], 2)
+        length = int(bits[i + pos_bits:i + pos_bits + len_bits], 2)
+        symbol_bits = bits[i + pos_bits + len_bits:i + pos_bits + len_bits + 8]
+        symbol = chr(int(symbol_bits, 2)) if symbol_bits != "00000000" else None
+
+        tags.append(TAG(position, length, symbol))
+
+    return tags

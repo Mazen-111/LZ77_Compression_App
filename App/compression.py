@@ -1,4 +1,3 @@
-# Tag => <position, length, next symbol>  
 class TAG:
     def __init__(self, position, length, offset):
         self.position = position
@@ -7,8 +6,8 @@ class TAG:
 
     def __str__(self):
         return f"<{self.position},{self.length},{self.offset}>"
+    
 
-# function to handle the repetition
 def handle_repetition(text, i, sws, slh):
     best_position = 0
     best_length = 0
@@ -38,7 +37,6 @@ def handle_repetition(text, i, sws, slh):
     return TAG(best_position, best_length, offset), next_i
 
 
-# compression function
 def lz77_compression(text, sws, slh):
     n = len(text)
     i = 0
@@ -61,11 +59,43 @@ def lz77_compression(text, sws, slh):
     result = " ".join(str(tag) for tag in listOfTags)
     return listOfTags, result
 
+
+def save_binary_tags(tags, position_bits, length_bits):
+    bits = ""
+
+    for tag in tags:
+        bits += format(tag.position, f"0{position_bits}b")
+
+        bits += format(tag.length, f"0{length_bits}b")
+
+        if tag.offset is None:
+            bits += "00000000"
+        else:
+            bits += format(ord(tag.offset), "08b")
+
+    padding = (8-(len(bits) % 8)) % 8
+    bits += "0" * padding
+
+    pos_overhead = format(position_bits, "06b")
+    len_overhead = format(length_bits, "06b")
+    padding_overhead = format(padding, "04b")
+
+    overhead = pos_overhead + len_overhead + padding_overhead
+
+    with open("output.bin", "wb") as file:
+
+        file.write(bytes([int(overhead[i:i + 8], 2) for i in range(0, len(overhead), 8)]))
+        
+        for i in range(0, len(bits), 8):
+            byte = int(bits[i:i + 8], 2)
+            file.write(bytes([byte]))
+
 def size_after_compression(tags):
     max_position_bits = max(tag.position for tag in tags).bit_length()
     max_length_bits = max(tag.length for tag in tags).bit_length()
     tag_size = max_position_bits + max_length_bits + 8
-    return tag_size
+    return tag_size, max_position_bits, max_length_bits
+
 
 def printTags(tagsAsTxt, text, tag_size, tags):
     print("-------------------------------------")
